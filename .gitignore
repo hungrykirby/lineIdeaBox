@@ -102,3 +102,14 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+
+
+#test db file
+*.db
+
+#vs code
+.vscode
+
+
+#admin user create
+admin_user_create.py

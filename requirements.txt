@@ -10,3 +10,5 @@ line-bot-sdk
 responses
 argparse
 Alembic
+flask_admin
+flask_security
