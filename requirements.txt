@@ -1,6 +1,6 @@
 gunicorn==19.6.0
 numpy==1.11.3
-Flask==0.12
+Flask==1.0.2
 Jinja2
 pip
 flask-sqlalchemy
