@@ -1,0 +1,12 @@
+gunicorn==19.6.0
+numpy==1.11.3
+Flask==0.12
+Jinja2
+pip
+flask-sqlalchemy
+psycopg2
+SQLAlchemy
+line-bot-sdk
+responses
+argparse
+Alembic
