@@ -1,0 +1,11 @@
+{% extends "layout.html" %}
+{% block content %}
+<div id="messages" style='display:flex;'>
+  {% for d in render_data %}
+    <p>{{d.id}}</p>
+    <p>{{d.comment}}</p>
+    <p>{{d.type}}</p>
+    <p>{{d.date}}</p>
+  {% endfor %}
+</div>
+{% endblock %}

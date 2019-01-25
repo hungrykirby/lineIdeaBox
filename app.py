@@ -107,6 +107,8 @@ class User(db.Model, UserMixin):
     profile = db.Column(db.String(255))
 
     #ユーザの状態：なんかわからんけどメッセージ入力を受け付けるときには数字を変えるとかしたいね。
+    # 0 or None : no state
+    # 1 : waiting for new idea
     state = db.Column(db.Integer)
 
     #ここ管理者だけ
@@ -123,6 +125,9 @@ class Message(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     comment = db.Column(db.Text)
+
+    # 0 or None : plain message
+    # 1 : idea message
     comment_type = db.Column(db.Integer)
     date = db.Column(db.DateTime)
 
@@ -214,11 +219,29 @@ def security_context_processor():
         get_url=url_for
     )
 
+@app.route('/messages', methods=['GET'])
+def show_messages():
+    ms = db.session.query(Message).all()
+    render_data = []
+    for m in ms:
+        if m.date:
+            date = m.date.strftime('%Y-%m-%d %H:%M:%S')
+        else:
+            date = 'not set'    
+        render_data.append({
+            'id':m.id, 'comment':m.comment, 'type':m.comment_type, 'date':date
+        })
+        print(date)
+    return render_template('messages.html', render_data = render_data)
+
 @handler.add(MessageEvent, message=TextMessage)
 def handle_text_message(event):
     text = event.message.text
     line_user_id = event.source.user_id
     user = User.query.filter(User.line_user_id == line_user_id).first()
+
+    comment_type = 0
+    now = datetime.now()
 
     if text == 'profile':
         if isinstance(event.source, SourceUser):
@@ -231,12 +254,22 @@ def handle_text_message(event):
                 event.reply_token,
                 line_bot_reply_message.profile_messages(text, user, profile)['error']
             )
+    elif text == 'save':
+        user.state = 1
+        db.session.flush()
+        db.session.commit()            
     else:
+        user.state = 0
+        if user.state == 1:
+            comment_type = 1
         line_bot_api.reply_message(
             event.reply_token, 
             line_bot_reply_message.other_messages(text, user)
         )
-
+    m = Message(comment=text, comment_type=comment_type, user_id=user.id, date=datetime.fromtimestamp(int(event.timestamp/1000)))
+    db.session.add(m)
+    #db.session.flush()
+    db.session.commit()
 
 @handler.add(FollowEvent)
 def handle_follow(event):

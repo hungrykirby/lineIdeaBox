@@ -23,6 +23,13 @@ def profile_messages(text, user, profile):
         ]
     }
 
+def pre_save_messages(text, user):
+    messages = []
+    messages.append(
+        TextSendMessage(text='please input your idea!')
+    )
+    return messages
+
 def follow_messages():
     messages = []
     messages.append(
