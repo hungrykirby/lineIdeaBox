@@ -257,15 +257,20 @@ def handle_text_message(event):
     elif text == 'save':
         user.state = 1
         db.session.flush()
-        db.session.commit()            
+        db.session.commit()
+        line_bot_api.reply_message(event.reply_token, line_bot_reply_message.pre_save_messages(text, user))      
     else:
-        user.state = 0
+        messages = line_bot_reply_message.other_messages(text, user)
         if user.state == 1:
             comment_type = 1
+            messages = line_bot_reply_message.thanks_idea_messages(text, user)
+        user.state = 0
         line_bot_api.reply_message(
             event.reply_token, 
-            line_bot_reply_message.other_messages(text, user)
+            messages
         )
+        db.session.flush()
+        db.session.commit()
     m = Message(comment=text, comment_type=comment_type, user_id=user.id, date=datetime.fromtimestamp(int(event.timestamp/1000)))
     db.session.add(m)
     #db.session.flush()

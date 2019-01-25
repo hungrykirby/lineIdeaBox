@@ -1,11 +1,12 @@
 {% extends "layout.html" %}
 {% block content %}
-<div id="messages" style='display:flex;'>
+<div id="messages">
   {% for d in render_data %}
     <p>{{d.id}}</p>
     <p>{{d.comment}}</p>
     <p>{{d.type}}</p>
     <p>{{d.date}}</p>
+    <hr>
   {% endfor %}
 </div>
 {% endblock %}

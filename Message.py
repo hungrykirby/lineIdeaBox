@@ -30,6 +30,13 @@ def pre_save_messages(text, user):
     )
     return messages
 
+def thanks_idea_messages(text, user):
+    messages = []
+    messages.append(
+        TextSendMessage(text='thanks your idea!')
+    )
+    return messages
+
 def follow_messages():
     messages = []
     messages.append(
