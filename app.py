@@ -129,6 +129,14 @@ class Message(db.Model):
     # 0 or None : plain message
     # 1 : idea message
     comment_type = db.Column(db.Integer)
+
+    # how many times the idea has look
+    #count_lock = db.Column(db.Integer)
+
+
+    # the state of user's activities
+    #user_state = db.Column(db.Integer)
+
     date = db.Column(db.DateTime)
 
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
@@ -232,6 +240,7 @@ def show_messages():
             'id':m.id, 'comment':m.comment, 'type':m.comment_type, 'date':date
         })
         print(date)
+        #todo: output "count_look"
     return render_template('messages.html', render_data = render_data)
 
 @handler.add(MessageEvent, message=TextMessage)
@@ -259,6 +268,11 @@ def handle_text_message(event):
         db.session.flush()
         db.session.commit()
         line_bot_api.reply_message(event.reply_token, line_bot_reply_message.pre_save_messages(text, user))      
+    elif text == 'look':
+        # ランダムにidea一つ取得しています。これもっと高速化しましょう。
+        all_messages = Message.query.filter(Message.user_id == user.id).all()
+        rc = random.choice(all_messages)
+        print(rc.comment)
     else:
         messages = line_bot_reply_message.other_messages(text, user)
         if user.state == 1:
