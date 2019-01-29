@@ -128,14 +128,15 @@ class Message(db.Model):
 
     # 0 or None : plain message
     # 1 : idea message
+    # 2 : no active idea
     comment_type = db.Column(db.Integer)
 
     # how many times the idea has look
-    #count_lock = db.Column(db.Integer)
+    count_lock = db.Column(db.Integer)
 
 
     # the state of user's activities
-    #user_state = db.Column(db.Integer)
+    user_state = db.Column(db.Integer)
 
     date = db.Column(db.DateTime)
 
@@ -270,7 +271,7 @@ def handle_text_message(event):
         line_bot_api.reply_message(event.reply_token, line_bot_reply_message.pre_save_messages(text, user))      
     elif text == 'look':
         # ランダムにidea一つ取得しています。これもっと高速化しましょう。
-        all_messages = Message.query.filter(Message.user_id == user.id).all()
+        all_messages = Message.query.filter(Message.user_id == user.id).filter(Message.comment_type == 1).all()
         rc = random.choice(all_messages)
         print(rc.comment)
     else:
