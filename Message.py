@@ -42,6 +42,32 @@ def random_idea_reply_messages(idea, user):
     messages.append(
         TextSendMessage(text='This is someone\'s idea\n' + idea)
     )
+    messages.append(
+        TemplateSendMessage(
+            alt_text='alt_text',
+            template=ConfirmTemplate(
+                text='fav it ?',
+                actions=[
+                    MessageAction(label='Good', text='Good'),
+                    MessageAction(label='----', text='----')
+                ]
+            )
+        )
+   ) 
+    return messages
+
+def lets_idea_messages():
+    messages = []
+    messages.append(
+        TextSendMessage(text='Let\'s tell me your special idea!')
+    )
+    return messages
+
+def thanks_idea_fav():
+    messages = []
+    messages.append(
+        TextSendMessage(text='thanks your fav!')
+    )
     return messages
 
 def follow_messages():

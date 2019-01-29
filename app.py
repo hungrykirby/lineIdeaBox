@@ -109,7 +109,13 @@ class User(db.Model, UserMixin):
     #ユーザの状態：なんかわからんけどメッセージ入力を受け付けるときには数字を変えるとかしたいね。
     # 0 or None : no state
     # 1 : waiting for new idea
+    # 2 : waiting for eavluating
     state = db.Column(db.Integer)
+
+
+    #このユーザが最後に見たアイデアのid
+    #これ本当は配列的な持ち方をできるようにすべきかな。
+    last_idea_id = db.Column(db.Integer)
 
     #ここ管理者だけ
     email = db.Column(db.String(255), unique=True)
@@ -134,6 +140,8 @@ class Message(db.Model):
     # how many times the idea has look
     count_look = db.Column(db.Integer)
 
+    # いいねの数
+    count_good = db.Column(db.Integer)
 
     # the state of user's activities
     user_state = db.Column(db.Integer)
@@ -238,7 +246,12 @@ def show_messages():
         else:
             date = 'not set'    
         render_data.append({
-            'id':m.id, 'comment':m.comment, 'type':m.comment_type, 'date':date, 'count':m.count_look
+            'id':m.id,
+            'comment':m.comment,
+            'type':m.comment_type,
+            'date':date,
+            'count':m.count_look,
+            'good':m.count_good
         })
         print(date)
         #todo: output "count_look"
@@ -279,6 +292,8 @@ def handle_text_message(event):
             rc.count_look = 0
         #print(rc.comment)
         messages = line_bot_reply_message.random_idea_reply_messages(rc.comment, user)
+        user.last_idea_id = rc.id
+        user.state = 2
         db.session.flush()
         db.session.commit()
         line_bot_api.reply_message(
@@ -289,6 +304,18 @@ def handle_text_message(event):
         if user.state == 1:
             comment_type = 1
             messages = line_bot_reply_message.thanks_idea_messages(text, user)
+        elif user.state == 2:
+            messages = line_bot_reply_message.lets_idea_messages()
+            m = Message.query.filter(Message.id == user.last_idea_id).first_or_404()
+            if text == 'Good' and m:
+                messages = line_bot_reply_message.thanks_idea_fav()
+                if not m.count_good is None:
+                    m.count_good = m.count_good + 1
+                else:
+                    m.count_good = 0
+                print(m.count_good)
+            elif text == '----' and m:
+                pass
         user.state = 0
         line_bot_api.reply_message(
             event.reply_token, 
@@ -296,7 +323,14 @@ def handle_text_message(event):
         )
         db.session.flush()
         db.session.commit()
-    m = Message(comment=text, comment_type=comment_type, user_id=user.id, date=datetime.fromtimestamp(int(event.timestamp/1000)))
+    m = Message(
+        comment=text,
+        comment_type=comment_type,
+        user_id=user.id,
+        date=datetime.fromtimestamp(int(event.timestamp/1000)),
+        count_good = 0,
+        count_look = 0
+        )
     db.session.add(m)
     #db.session.flush()
     db.session.commit()
@@ -317,7 +351,9 @@ def handle_follow(event):
         connect_date=connect_time,
         password=encrypt_password("".join([random.choice(source_str) for x in range(35)])),
         roles=[Role(name='user'), ],
-        profile=profile.display_name
+        profile=profile.display_name,
+        state = 0,
+        last_idea_id = -1
     )
 
     db.session.commit()
