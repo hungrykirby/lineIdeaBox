@@ -37,6 +37,13 @@ def thanks_idea_messages(text, user):
     )
     return messages
 
+def random_idea_reply_messages(idea, user):
+    messages = []
+    messages.append(
+        TextSendMessage(text='This is someone\'s idea\n' + idea)
+    )
+    return messages
+
 def follow_messages():
     messages = []
     messages.append(
