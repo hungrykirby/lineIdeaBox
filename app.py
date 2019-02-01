@@ -336,7 +336,7 @@ def handle_text_message(event):
             #自分の最後のアイデアメッセージを取得する
             last_my_idea = Message.query.filter(Message.user_id == user.id).order_by(Message.id.desc()).first_or_404()
             if last_my_idea:
-                last_idea_id.category = text
+                last_my_idea.category = text
 
         # user.state = 0
         line_bot_api.reply_message(
