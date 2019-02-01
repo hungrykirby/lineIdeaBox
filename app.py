@@ -256,7 +256,7 @@ def show_messages():
             'date':date,
             'count':m.count_look,
             'good':m.count_good,
-            'Cat':m.category
+            'cat':m.category
         })
         print(date)
         #todo: output "count_look"
