@@ -8,6 +8,18 @@
     <p>Date : {{d.date}}</p>
     <p>Looked : {{d.count}}</p>
     <p>Good : {{d.good}}</p>
+    {% if d.is_active %}
+      <form action="{{ url_for('inactivecom') }}" method="post">
+        <input type="text" name='num' placeholder="{{d.id}}" value="{{d.id}}"/>
+        <button type="submit">非アクティブ化する</button>
+      </form>
+    {% else %}
+      <form action="{{ url_for('reactive') }}" method="post">
+        <input type="text" name='num' placeholder="{{d.id}}" value="{{d.id}}"/>
+        <input type="text" name='activetype' placeholder="0" value="0"/>
+        <button type="submit">アクティブ化する</button>
+      </form>
+    {% endif %}
     <hr>
   {% endfor %}
 </div>

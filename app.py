@@ -111,6 +111,7 @@ class User(db.Model, UserMixin):
     # 1 : waiting for new idea
     # 2 : waiting for eavluating
     # 3 : アイデアを述べた後、カテゴリーを記述する前
+    # 4 : 意見を受け付ける状態。
     state = db.Column(db.Integer)
 
 
@@ -136,6 +137,7 @@ class Message(db.Model):
     # 0 or None : plain message
     # 1 : idea message
     # 2 : no active idea
+    # 3 : 要望
     comment_type = db.Column(db.Integer)
 
     # how many times the idea has look
@@ -240,9 +242,68 @@ def security_context_processor():
         get_url=url_for
     )
 
+@app.route('/inactivecom', methods=['POST'])
+def inactivecom():
+    num = request.form['num']
+    print(num)
+    num = int(num)
+    ms = db.session.query(Message).filter(Message.id == num).all()
+    for m in ms:
+        m.comment_type = 2
+    db.session.flush()
+    db.session.commit()
+    #return 'Hello World'
+    return redirect(url_for('show_messages'))
+
+@app.route('/reactive', methods=['POST'])
+def reactive():
+    num = request.form['num']
+    activetype = request.form['activetype']
+    num = int(num)
+    activetype = int(activetype)
+    ms = db.session.query(Message).filter(Message.id == num).all()
+    for m in ms:
+        m.comment_type = activetype
+    db.session.flush()
+    db.session.commit()
+    #return 'Hello World'
+    return redirect(url_for('show_messages'))
+
 @app.route('/messages', methods=['GET'])
 def show_messages():
     ms = db.session.query(Message).all()
+    render_data = []
+    for m in ms:
+        is_active = True
+        if m.comment_type == 2:
+            is_active = False
+
+        if m.date:
+            date = m.date.strftime('%Y-%m-%d %H:%M:%S')
+        else:
+            date = 'not set'
+        render_data.append({
+            'id':m.id,
+            'comment':m.comment,
+            'type':m.comment_type,
+            'date':date,
+            'count':m.count_look,
+            'good':m.count_good,
+            'cat':m.category,
+            'is_active':is_active
+        })
+        print(date)
+        #todo: output "count_look"
+    return render_template('messages.html', render_data = render_data)
+
+@app.route('/messages/<mtype>', methods=['GET'])
+def show_messages_wtype():
+    mnum = 0
+    if mtype == 'idea':
+        mnum = 1
+    elif mtype == 'iken':
+        mnum = 3
+    ms = db.session.query(Message).filter(Message.comment_type == mnum).all()
     render_data = []
     for m in ms:
         if m.date:
@@ -256,7 +317,7 @@ def show_messages():
             'date':date,
             'count':m.count_look,
             'good':m.count_good,
-            'Cat':m.category
+            'cat':m.category
         })
         print(date)
         #todo: output "count_look"
@@ -282,12 +343,24 @@ def handle_text_message(event):
                 event.reply_token,
                 line_bot_reply_message.profile_messages(text, user, profile)['error']
             )
-    elif text == 'save':
+    elif text == 'save' or text == '保存する':
         user.state = 1
+        '''
+        アイデアを保存するコマンドを実行します。
+        '''
         db.session.flush()
         db.session.commit()
         line_bot_api.reply_message(event.reply_token, line_bot_reply_message.pre_save_messages(text, user))
-    elif text == 'look':
+    elif text == 'want' or text == '要望を送る':
+        user.state = 4
+        # 要望を受け付ける
+        db.session.flush()
+        db.session.commit()
+
+        line_bot_api.reply_message(event.reply_token, line_bot_reply_message.pre_save_iken(text, user))
+
+    elif text == 'look' or text == 'アイデアを見る':
+        user.state = 2
         # ランダムにidea一つ取得しています。これもっと高速化しましょう。
         # TODO: 一つ目のfilterはnotに変えて使ってください。
         all_messages = Message.query.filter(Message.user_id == user.id).filter(Message.comment_type == 1).all()
@@ -299,7 +372,7 @@ def handle_text_message(event):
         #print(rc.comment)
         messages = line_bot_reply_message.random_idea_reply_messages(rc.comment, user)
         user.last_idea_id = rc.id
-        user.state = 2
+
         db.session.flush()
         db.session.commit()
         line_bot_api.reply_message(
@@ -319,24 +392,31 @@ def handle_text_message(event):
 
             messages = line_bot_reply_message.lets_idea_messages()
             _m = Message.query.filter(Message.id == user.last_idea_id).first_or_404()
-            if text == 'Good' and _m:
+            if (text == 'いいね！' or text == 'いいね') and _m:
                 messages = line_bot_reply_message.thanks_idea_fav()
                 if not _m.count_good is None:
                     _m.count_good = _m.count_good + 1
                 else:
                     _m.count_good = 0
                 print(_m.count_good)
-            elif text == '----' and m:
-                pass
+            elif text == '評価しない' and m:
+                messages = line_bot_reply_message.thanks_idea_no_fav()
+
         elif user.state == 3:
             #カテゴリー受付状態。
 
             user.state = 0
+            messages = line_bot_reply_message.thanks_cat_messages(text, user)
 
             #自分の最後のアイデアメッセージを取得する
             last_my_idea = Message.query.filter(Message.user_id == user.id).order_by(Message.id.desc()).first_or_404()
             if last_my_idea:
-                last_idea_id.category = text
+                last_my_idea.category = text
+        elif user.state == 4:
+            # 意見受け付けた後
+            messages = line_bot_reply_message.thanks_iken_messages(text, user)
+            comment_type = 3
+            user.state = 0
 
         # user.state = 0
         line_bot_api.reply_message(
@@ -352,7 +432,7 @@ def handle_text_message(event):
         date=datetime.fromtimestamp(int(event.timestamp/1000)),
         count_good = 0,
         count_look = 0
-        )
+    )
     db.session.add(m)
     #db.session.flush()
     db.session.commit()
