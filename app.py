@@ -399,7 +399,7 @@ def handle_text_message(event):
                 else:
                     _m.count_good = 0
                 print(_m.count_good)
-            elif text == '評価しない' and m:
+            elif text == '評価しない' and _m:
                 messages = line_bot_reply_message.thanks_idea_no_fav()
 
         elif user.state == 3:
