@@ -297,7 +297,7 @@ def show_messages():
     return render_template('messages.html', render_data = render_data)
 
 @app.route('/messages/<mtype>', methods=['GET'])
-def show_messages_wtype():
+def show_messages_wtype(mtype=None):
     mnum = 0
     if mtype == 'idea':
         mnum = 1
