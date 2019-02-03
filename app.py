@@ -53,8 +53,8 @@ app = Flask(__name__)
 app.config.from_pyfile('config.py')
 db_path = os.path.join(os.path.dirname(__file__), 'test.db')
 db_uri = 'sqlite:///{}'.format(db_path)
-app.config['SQLALCHEMY_DATABASE_URI'] = db_uri #テスト環境用
-#app.config['SQLALCHEMY_DATABASE_URI'] = os.environ['DATABASE_URL'] #本番環境用
+#app.config['SQLALCHEMY_DATABASE_URI'] = db_uri #テスト環境用
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ['DATABASE_URL'] #本番環境用
 db = SQLAlchemy(app)
 
 # get channel_secret and channel_access_token from your environment variable
@@ -363,7 +363,7 @@ def handle_text_message(event):
         user.state = 2
         # ランダムにidea一つ取得しています。これもっと高速化しましょう。
         # TODO: 一つ目のfilterはnotに変えて使ってください。
-        all_messages = Message.query.filter(Message.user_id == user.id).filter(Message.comment_type == 1).all()
+        all_messages = Message.query.filter(Message.comment_type == 1).all()
         rc = random.choice(all_messages)
         if not rc.count_look is None:
             rc.count_look = rc.count_look + 1

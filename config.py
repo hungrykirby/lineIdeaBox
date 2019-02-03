@@ -1,9 +1,9 @@
 import os
 from os.path import join, dirname
-from dotenv import load_dotenv
+#from dotenv import load_dotenv
 
-dotenv_path = join(dirname(__file__), '.env')
-load_dotenv(dotenv_path)
+#dotenv_path = join(dirname(__file__), '.env')
+#load_dotenv(dotenv_path)
 
 
 # Create dummy secrey key so we can use sessions
