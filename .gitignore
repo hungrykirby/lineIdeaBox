@@ -112,4 +112,4 @@ venv.bak/
 
 
 #admin user create
-#admin_user_create.py
+admin_user_create.py
