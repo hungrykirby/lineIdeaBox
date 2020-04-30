@@ -271,7 +271,7 @@ def reactive():
 
 @app.route('/messages', methods=['GET'])
 def show_messages():
-    ms = db.session.query(Message).order_by(desc(Message.date)).all()
+    ms = db.session.query(Message).order_by(Message.id.desc()).all()
     render_data = []
     for m in ms:
         is_active = True
